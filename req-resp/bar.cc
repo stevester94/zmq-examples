@@ -10,9 +10,7 @@
 
 using std::atoi;
 
-const std::string SERVER_ADDRESS("tcp://192.168.10.180");
-
-void client_routine(const std::vector<uint16_t>& server_ports)
+void client_routine(const std::vector<std::string>& servers)
 {
     int rc;
 
@@ -20,12 +18,10 @@ void client_routine(const std::vector<uint16_t>& server_ports)
     void *requester = zmq_socket(context, ZMQ_REQ);
 
     // Connect to all requested servers
-    for(uint16_t port : server_ports)
+    for(const std::string& server : servers)
     {
-        std::cout << "Connecting to server " << SERVER_ADDRESS << ":" << port << std::endl;
-        std::stringstream server;
-        server << SERVER_ADDRESS << ":" << port;
-        int rc = zmq_connect(requester, server.str().c_str());
+        std::cout << "Connecting to server " << server << std::endl;
+        int rc = zmq_connect(requester, server.c_str());
         assert(rc == 0);
         std::cout << "Connected to server" << std::endl;
     }
@@ -101,7 +97,7 @@ void server_routine(uint16_t port)
     void *responder = zmq_socket (context, ZMQ_REP);
 
     std::stringstream server;
-    server << SERVER_ADDRESS << ":" << port;
+    server << "tcp://*" << ":" << port;
     std::cout << "Attempting to bind to " << server.str() << std::endl;
     int rc = zmq_bind (responder, server.str().c_str());
     assert (rc == 0);
@@ -155,16 +151,14 @@ int main(int argc, char** argv) {
         std::cout << "Running as client with the following ports:" << std::endl;
         std::cout << "    ";
 
-        std::vector<uint16_t> ports;
+        std::vector<std::string> servers;
+
         for(int i = 2; i < argc; i++)
         {
-            uint16_t p = (uint16_t)atoi( argv[i] );
-            ports.push_back(p);
-            std::cout << p << " ";
+            servers.push_back(std::string(argv[i]));
         }
-        std::cout << std::endl;
         
-        client_routine(ports);
+        client_routine(servers);
     }
     else if(std::string(argv[1]) == "server")
     {
