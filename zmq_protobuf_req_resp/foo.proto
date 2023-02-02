@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+message Message {
+  string client_name = 1;
+  string payload = 2;
+}
